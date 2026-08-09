@@ -1,0 +1,19 @@
+# Install: helm install shared-postgres helm/charts/postgres -n shared-data -f helm/charts/postgres/values.local.yaml
+# Upgrade: helm upgrade shared-postgres helm/charts/postgres -n shared-data -f helm/charts/postgres/values.local.yaml
+
+image:
+  repository: postgres
+  tag: "16"
+  pullPolicy: IfNotPresent
+
+auth:
+  database: personalfinance
+  username: admin
+  # REQUIRED: set via values.local.yaml, never commit real values
+  password: ""
+  postgresPassword: ""
+
+primary:
+  persistence:
+    size: 10Gi
+    storageClass: ""

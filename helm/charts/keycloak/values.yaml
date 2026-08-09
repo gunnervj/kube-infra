@@ -1,0 +1,51 @@
+# Install: helm install keycloak helm/charts/keycloak -n security -f helm/charts/keycloak/values.local.yaml
+# Upgrade: helm upgrade keycloak helm/charts/keycloak -n security -f helm/charts/keycloak/values.local.yaml
+# Prerequisites: shared-postgres must be installed first.
+# The setup Job (post-install/post-upgrade hook) will configure the realm,
+# clients, and protocol mappers automatically after Keycloak is ready.
+#
+# Istio Ambient Mode Notes:
+# - Keycloak pod is enrolled in ambient mode (no sidecar, no opt-out).
+# - Sidecar injection is explicitly disabled (sidecar.istio.io/inject: false)
+#   since ambient mode handles mesh traffic via ztunnel.
+# - Connects to postgres via the waypoint proxy (mTLS enforced by ztunnel).
+
+# Custom image built from helm/charts/keycloak/Dockerfile — bakes in the
+# personal-finance Keycloakify theme (keycloak-theme-for-kc-all-other-versions.jar,
+# matching this chart's pinned Keycloak version, 26.2.4) on top of the stock
+# quay.io/keycloak/keycloak image. Rebuild + push that Dockerfile and bump
+# the tag here if the theme changes.
+image:
+  repository: vnair5/pf-keycloak
+  tag: "latest"
+  pullPolicy: Always
+
+adminUser: admin
+adminPassword: ""  # REQUIRED: set via --set or override file, never commit
+
+hostname: auth.astra.home
+frontendUrl: "https://finance.astra.home"
+
+# PostgreSQL connection (defaults match personal-finance release name)
+db:
+  host: shared-postgres-postgresql.shared-data.svc.cluster.local
+  port: 5432
+  name: personalfinance
+  username: admin
+  schema: public
+  # Secret created by shared-postgres release
+  existingSecret: db-credentials
+  existingSecretKey: password
+
+ingress:
+  gatewayName: astra-gateway
+  gatewayNamespace: istio-ingress
+  hostname: auth.astra.home
+
+resources:
+  requests:
+    cpu: "500m"
+    memory: "512Mi"
+  limits:
+    cpu: "1000m"
+    memory: "1Gi"

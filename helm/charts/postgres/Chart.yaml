@@ -1,0 +1,6 @@
+apiVersion: v2
+name: postgres
+description: Shared PostgreSQL for the astra.home cluster
+type: application
+version: 0.1.0
+appVersion: "16"

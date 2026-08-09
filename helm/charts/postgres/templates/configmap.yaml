@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-postgresql-initdb
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/instance: {{ .Release.Name }}
+data:
+  01-init.sql: |
+    -- Grant admin full access to public schema (used by Keycloak)
+    GRANT ALL ON SCHEMA public TO admin;
+    -- Create app schemas (tables managed by Liquibase in each service)
+    CREATE SCHEMA IF NOT EXISTS user_schema AUTHORIZATION admin;
+    CREATE SCHEMA IF NOT EXISTS budget_schema AUTHORIZATION admin;
+    CREATE SCHEMA IF NOT EXISTS transaction_schema AUTHORIZATION admin;
+    CREATE SCHEMA IF NOT EXISTS networth_schema AUTHORIZATION admin;
+    CREATE SCHEMA IF NOT EXISTS retirement_schema AUTHORIZATION admin;
