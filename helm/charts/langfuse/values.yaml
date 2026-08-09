@@ -1,0 +1,111 @@
+# Prerequisites:
+#   1. Run once: helm dependency update helm/charts/langfuse
+#   2. Fill in secrets in values.local.yaml
+#   3. Namespace must exist: kubectl create namespace langfuse
+#
+# Install:  helm install langfuse helm/charts/langfuse -n langfuse -f helm/charts/langfuse/values.local.yaml
+# Upgrade:  helm upgrade langfuse helm/charts/langfuse -n langfuse -f helm/charts/langfuse/values.local.yaml
+
+# ---------------------------------------------------------------------------
+# Wrapper-chart values — used only by templates/ in this chart
+# ---------------------------------------------------------------------------
+postgres:
+  host: shared-postgres-postgresql.shared-data.svc.cluster.local
+  port: 5432
+  username: admin
+  # REQUIRED: set via values.local.yaml
+  adminPassword: ""
+
+redis:
+  host: shared-redis-redis.shared-data.svc.cluster.local
+  port: 6379
+  # REQUIRED: set via values.local.yaml (must match shared-redis auth.password)
+  password: ""
+
+minio:
+  host: shared-minio-minio.shared-data.svc.cluster.local
+  port: 9000
+  bucket: langfuse
+  rootUser: admin
+  # REQUIRED: set via values.local.yaml (must match shared-minio auth.rootPassword)
+  rootPassword: ""
+
+ingress:
+  gatewayName: astra-gateway
+  gatewayNamespace: istio-ingress
+  hostname: langfuse.astra.home
+
+# ---------------------------------------------------------------------------
+# Upstream langfuse subchart values
+# The upstream chart nests its core config under its own `langfuse:` key,
+# so this wrapper uses `langfuse.langfuse.*` to reach it.
+# ---------------------------------------------------------------------------
+langfuse:
+  # Core Langfuse configuration (upstream chart's `langfuse:` namespace)
+  langfuse:
+    # REQUIRED secrets — generate each with: openssl rand -hex 32
+    salt:
+      value: ""  # set in values.local.yaml
+    nextauth:
+      url: "https://langfuse.astra.home"
+      secret:
+        value: ""  # set in values.local.yaml
+    encryptionKey:
+      value: ""  # set in values.local.yaml (strongly recommended)
+
+    # Disable the upstream chart's built-in ingress; HTTPRoute is in templates/httproute.yaml
+    ingress:
+      enabled: false
+
+  # External PostgreSQL — uses shared-postgres in shared-data namespace.
+  # langfuse-postgres-creds secret is created by templates/postgres-secret.yaml.
+  postgresql:
+    deploy: false
+    host: shared-postgres-postgresql.shared-data.svc.cluster.local
+    port: 5432
+    auth:
+      username: admin
+      database: langfuse
+      existingSecret: langfuse-postgres-creds
+      secretKeys:
+        userPasswordKey: password
+
+  # ClickHouse (bundled) — single replica, no clustering (single-node cluster)
+  clickhouse:
+    replicaCount: 1
+    clusterEnabled: false
+    resourcesPreset: small
+    auth:
+      password: ""
+    zookeeper:
+      replicaCount: 1
+      resourcesPreset: nano
+
+  # External Redis — uses shared-redis in shared-data namespace.
+  # langfuse-redis-creds secret is created by templates/redis-secret.yaml.
+  redis:
+    deploy: false
+    host: shared-redis-redis.shared-data.svc.cluster.local
+    port: 6379
+    auth:
+      username: "default"
+      existingSecret: langfuse-redis-creds
+      existingSecretPasswordKey: password
+
+  # External MinIO/S3 — uses shared-minio in shared-data namespace.
+  # langfuse-minio-creds secret is created by templates/minio-secret.yaml.
+  s3:
+    deploy: false
+    bucket: langfuse
+    region: us-east-1
+    endpoint: "http://shared-minio-minio.shared-data.svc.cluster.local:9000"
+    forcePathStyle: true
+    accessKeyId:
+      secretKeyRef:
+        name: langfuse-minio-creds
+        key: accessKeyId
+    secretAccessKey:
+      secretKeyRef:
+        name: langfuse-minio-creds
+        key: secretAccessKey
+

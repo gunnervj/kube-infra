@@ -1,0 +1,11 @@
+# Install: helm install shared-redis helm/charts/redis -n shared-data -f helm/charts/redis/values.local.yaml
+# Upgrade: helm upgrade shared-redis helm/charts/redis -n shared-data -f helm/charts/redis/values.local.yaml
+
+image:
+  repository: redis
+  tag: "7"
+  pullPolicy: IfNotPresent
+
+auth:
+  # REQUIRED: set via values.local.yaml, never commit real values
+  password: ""

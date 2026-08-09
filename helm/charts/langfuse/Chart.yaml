@@ -1,0 +1,9 @@
+apiVersion: v2
+name: langfuse
+description: Langfuse LLM observability platform — wraps upstream chart with shared postgres and Istio HTTPRoute
+type: application
+version: 0.1.0
+dependencies:
+  - name: langfuse
+    version: "1.5.39"
+    repository: https://langfuse.github.io/langfuse-k8s

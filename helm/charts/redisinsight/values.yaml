@@ -1,0 +1,12 @@
+# Install: helm install shared-redisinsight helm/charts/redisinsight -n shared-data
+# Upgrade: helm upgrade shared-redisinsight helm/charts/redisinsight -n shared-data
+
+image:
+  repository: redis/redisinsight
+  tag: "2.70"
+  pullPolicy: IfNotPresent
+
+ingress:
+  gatewayName: astra-gateway
+  gatewayNamespace: istio-ingress
+  hostname: redisinsight.astra.home

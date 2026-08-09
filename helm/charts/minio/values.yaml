@@ -1,0 +1,37 @@
+# Install: helm install shared-minio helm/charts/minio -n shared-data -f helm/charts/minio/values.local.yaml
+# Upgrade: helm upgrade shared-minio helm/charts/minio -n shared-data -f helm/charts/minio/values.local.yaml
+
+image:
+  repository: minio/minio
+  tag: "RELEASE.2025-04-22T22-12-26Z"
+  pullPolicy: IfNotPresent
+
+auth:
+  rootUser: admin
+  # REQUIRED: set via values.local.yaml, never commit real values
+  rootPassword: ""
+
+persistence:
+  # type: pvc       — allocate a PVC via a storage class (default)
+  # type: hostPath  — mount a directory already present on the node
+  # type: nfs       — mount an NFS share (Kubernetes manages the mount, no host config needed)
+  type: nfs
+
+  # Used when type: pvc
+  size: 20Gi
+  storageClass: ""
+
+  # Used when type: hostPath
+  hostPath: ""
+  nodeName: ""
+
+  # Used when type: nfs
+  nfs:
+    server: 192.168.122.1   # rudra's libvirt gateway IP as seen from the VM
+    path: /data2/minio
+
+ingress:
+  enabled: true
+  gatewayName: astra-gateway
+  gatewayNamespace: istio-ingress
+  hostname: minio.astra.home

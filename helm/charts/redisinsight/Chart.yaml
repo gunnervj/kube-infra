@@ -1,0 +1,5 @@
+apiVersion: v2
+name: redisinsight
+description: RedisInsight web UI for inspecting Redis
+type: application
+version: 0.1.0
